@@ -14,6 +14,8 @@
           <a href="{{ . }}" id="{{ . }}" name="{{ . }}" class="list-group-item list-group-item-action">{{ . }}</a>
         {{ end }}
       </div>
+      <br/>
+      <div id="logs"></div>
     </div>
     <div class="stream">
       <input type="hidden" name="suuid" id="suuid" value="{{ .suuid }}">
@@ -26,7 +28,6 @@
       <h2 align=center>
         {{ .suuid }}
       </h2>
-      <div id="div"></div>
     </div>
     <div class="sources">
       <div class="list-group">
