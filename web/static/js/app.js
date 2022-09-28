@@ -11,7 +11,7 @@ const pc = new RTCPeerConnection(config);
 pc.onnegotiationneeded = handleNegotiationNeededEvent;
 
 let log = msg => {
-  document.getElementById('div').innerHTML += msg + '<br>'
+  document.getElementById('logs').innerHTML += msg + '<br>'
 }
 
 pc.ontrack = function(event) {

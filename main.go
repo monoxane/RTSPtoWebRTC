@@ -5,9 +5,16 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/monoxane/nk"
 )
 
+var router *nk.Router
+
 func main() {
+	router = nk.New(Config.Router.IP, Config.Router.Address, Config.Router.Model)
+
+	go router.Connect()
 	go serveHTTP()
 	go serveStreams()
 	sigs := make(chan os.Signal, 1)

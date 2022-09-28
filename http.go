@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/deepch/vdk/av"
@@ -23,7 +24,7 @@ func serveHTTP() {
 
 	router := gin.Default()
 	router.Use(CORSMiddleware())
-	
+
 	if _, err := os.Stat("./web"); !os.IsNotExist(err) {
 		router.LoadHTMLGlob("web/templates/*")
 		router.GET("/", HTTPAPIServerIndex)
@@ -32,15 +33,16 @@ func serveHTTP() {
 	router.POST("/stream/receiver/:uuid", HTTPAPIServerStreamWebRTC)
 	router.GET("/stream/codec/:uuid", HTTPAPIServerStreamCodec)
 	router.POST("/stream", HTTPAPIServerStreamWebRTC2)
+	router.POST("/route/:dst/:src", HTTPAPIServerRouteRequest)
 
 	router.StaticFS("/static", http.Dir("web/static"))
 	err := router.Run(Config.Server.HTTPPort)
 	if err != nil {
-		log.Fatalln("Start HTTP Server error", err)
+		log.Fatalln("unable to start http server", err)
 	}
 }
 
-//HTTPAPIServerIndex  index
+// HTTPAPIServerIndex  index
 func HTTPAPIServerIndex(c *gin.Context) {
 	_, all := Config.list()
 	if len(all) > 0 {
@@ -55,19 +57,27 @@ func HTTPAPIServerIndex(c *gin.Context) {
 	}
 }
 
-//HTTPAPIServerStreamPlayer stream player
+// HTTPAPIServerStreamPlayer stream player
 func HTTPAPIServerStreamPlayer(c *gin.Context) {
+	channel := c.Param("uuid")
 	_, all := Config.list()
 	sort.Strings(all)
-	c.HTML(http.StatusOK, "player.tmpl", gin.H{
+
+	templateVars := gin.H{
 		"port":     Config.Server.HTTPPort,
-		"suuid":    c.Param("uuid"),
+		"suuid":    channel,
 		"suuidMap": all,
+		"sources":  Config.Sources,
+		"output":   Config.Streams[channel].RTROutput,
 		"version":  time.Now().String(),
-	})
+	}
+
+	log.Printf("%+v", templateVars)
+
+	c.HTML(http.StatusOK, "player.tmpl", templateVars)
 }
 
-//HTTPAPIServerStreamCodec stream codec
+// HTTPAPIServerStreamCodec stream codec
 func HTTPAPIServerStreamCodec(c *gin.Context) {
 	if Config.ext(c.Param("uuid")) {
 		Config.RunIFNotRun(c.Param("uuid"))
@@ -98,7 +108,7 @@ func HTTPAPIServerStreamCodec(c *gin.Context) {
 	}
 }
 
-//HTTPAPIServerStreamWebRTC stream video over WebRTC
+// HTTPAPIServerStreamWebRTC stream video over WebRTC
 func HTTPAPIServerStreamWebRTC(c *gin.Context) {
 	if !Config.ext(c.PostForm("suuid")) {
 		log.Println("Stream Not Found")
@@ -177,7 +187,7 @@ type Response struct {
 }
 
 type ResponseError struct {
-	Error  string   `json:"error"`
+	Error string `json:"error"`
 }
 
 func HTTPAPIServerStreamWebRTC2(c *gin.Context) {
@@ -265,4 +275,24 @@ func HTTPAPIServerStreamWebRTC2(c *gin.Context) {
 			}
 		}
 	}()
+}
+
+func HTTPAPIServerRouteRequest(c *gin.Context) {
+	dst, dstErr := strconv.Atoi(c.Param("dst"))
+	if dstErr != nil {
+		c.Status(400)
+		return
+	}
+	src, srcErr := strconv.Atoi(c.Param("src"))
+	if srcErr != nil {
+		c.Status(400)
+		return
+	}
+
+	nkErr := router.SetCrosspoint(1, uint16(dst), uint16(src))
+	if nkErr != nil {
+		log.Printf("unable to route source %d to target %d: %s", src, dst, nkErr)
+		c.Status(500)
+	}
+	c.Status(202)
 }

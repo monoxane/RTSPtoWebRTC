@@ -1,0 +1,47 @@
+{
+  "server": {
+    "http_port": ":8083",
+    "ice_servers": ["stun:stun.l.google.com:19302"]
+  },
+  "streams": {
+    "CHANNEL 1": {
+      "on_demand": false,
+      "disable_audio": true,
+      "url": "rtsp://localhost:8554/probe1",
+      "rtr_output": 65
+    },
+    "CHANNEL 2": {
+      "on_demand": false,
+      "disable_audio": true,
+      "url": "rtsp://localhost:8554/probe2",
+      "rtr_output": 66
+    }
+  },
+  "router": {
+    "ip": "10.0.0.2",
+    "address": 254,
+    "model": "NK-3G72"
+  },
+  "sources": [
+    {
+      "rtr_input" : 1,
+      "label": "MV 1"
+    },
+    {
+      "rtr_input" : 2,
+      "label": "MV 2"
+    },
+    {
+      "rtr_input" : 23,
+      "label": "MV 3"
+    },
+    {
+      "rtr_input" : 24,
+      "label": "MV 4"
+    },
+    {
+      "rtr_input" : 25,
+      "label": "MV 5"
+    }
+  ]
+}
